@@ -1,0 +1,26 @@
+{
+  "name": "shipdapp",
+  "version": "0.1.0",
+  "description": "pump.fun for apps — Deploy an app, launch a token, trading tax pays hosting",
+  "private": true,
+  "scripts": {
+    "build:program": "anchor build",
+    "test:program": "anchor test",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "install:all": "npm install && cd frontend && npm install && cd ../sdk && npm install"
+  },
+  "devDependencies": {
+    "@anchor-lang/core": "^1.0.0",
+    "@solana/spl-token": "^0.1.8",
+    "@solana/web3.js": "^1.95.0",
+    "@types/chai": "^4.3.16",
+    "@types/mocha": "^10.0.7",
+    "chai": "^4.4.1",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.95.0"
+  }
+}

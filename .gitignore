@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.next/
+target/
+.anchor/
+.env
+*.log
+.DS_Store
+supabase/.temp/
+
+# Local Akash mTLS material (private keys); never commit
+akash-mtls-fresh/
+.secrets.mtls.env
+
+# Akash CLI binary at repo root (~175MB); install from releases instead
+/akash

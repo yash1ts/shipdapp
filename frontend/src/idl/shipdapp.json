@@ -1,0 +1,148 @@
+{
+  "address": "vSngxpkHdGeimmsppeGksGZ6srXAaWDKKQxXeHAhpRF",
+  "metadata": {
+    "name": "shipdapp",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "ShipDapp — app registry + hosting vault (replace address after anchor deploy)"
+  },
+  "instructions": [
+    {
+      "name": "initialize_platform",
+      "discriminator": [119, 201, 101, 45, 75, 122, 89, 3],
+      "accounts": [
+        { "name": "platform_config", "writable": true, "signer": false },
+        { "name": "authority", "writable": true, "signer": true },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": []
+    },
+    {
+      "name": "launch_app",
+      "discriminator": [87, 255, 40, 70, 155, 240, 175, 237],
+      "accounts": [
+        { "name": "app_state", "writable": true, "signer": false },
+        { "name": "token_mint", "writable": false, "signer": false },
+        { "name": "hosting_vault", "writable": false, "signer": false },
+        { "name": "platform_config", "writable": true, "signer": false },
+        { "name": "creator", "writable": true, "signer": true },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "name", "type": "string" },
+        { "name": "description", "type": "string" },
+        { "name": "docker_image", "type": "string" }
+      ]
+    },
+    {
+      "name": "set_app_live",
+      "discriminator": [219, 204, 209, 34, 27, 151, 155, 242],
+      "accounts": [
+        { "name": "app_state", "writable": true, "signer": false },
+        { "name": "platform_config", "writable": false, "signer": false },
+        { "name": "authority", "writable": false, "signer": true }
+      ],
+      "args": [{ "name": "app_url", "type": "string" }]
+    },
+    {
+      "name": "donate",
+      "discriminator": [121, 186, 218, 211, 73, 70, 196, 180],
+      "accounts": [
+        { "name": "app_state", "writable": true, "signer": false },
+        { "name": "hosting_vault", "writable": true, "signer": false },
+        { "name": "donor", "writable": true, "signer": true },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [{ "name": "amount", "type": "u64" }]
+    },
+    {
+      "name": "withdraw_for_hosting",
+      "discriminator": [223, 98, 69, 22, 204, 123, 8, 131],
+      "accounts": [
+        { "name": "app_state", "writable": true, "signer": false },
+        { "name": "hosting_vault", "writable": true, "signer": false },
+        { "name": "platform_config", "writable": false, "signer": false },
+        { "name": "authority", "writable": true, "signer": true }
+      ],
+      "args": [{ "name": "amount", "type": "u64" }]
+    },
+    {
+      "name": "pause_app",
+      "discriminator": [142, 191, 211, 112, 238, 129, 131, 66],
+      "accounts": [
+        { "name": "app_state", "writable": true, "signer": false },
+        { "name": "platform_config", "writable": false, "signer": false },
+        { "name": "authority", "writable": false, "signer": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "resume_app",
+      "discriminator": [157, 142, 0, 213, 116, 239, 239, 132],
+      "accounts": [
+        { "name": "app_state", "writable": true, "signer": false },
+        { "name": "platform_config", "writable": false, "signer": false },
+        { "name": "authority", "writable": false, "signer": true }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "AppState",
+      "discriminator": [217, 117, 146, 200, 12, 223, 18, 55]
+    },
+    {
+      "name": "PlatformConfig",
+      "discriminator": [160, 78, 128, 0, 248, 83, 230, 160]
+    }
+  ],
+  "types": [
+    {
+      "name": "AppState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "creator", "type": "pubkey" },
+          { "name": "token_mint", "type": "pubkey" },
+          { "name": "hosting_vault", "type": "pubkey" },
+          { "name": "name", "type": "string" },
+          { "name": "description", "type": "string" },
+          { "name": "docker_image", "type": "string" },
+          { "name": "app_url", "type": "string" },
+          {
+            "name": "status",
+            "type": { "defined": { "name": "AppStatus" } }
+          },
+          { "name": "created_at", "type": "i64" },
+          { "name": "last_funded_at", "type": "i64" },
+          { "name": "total_fees_collected", "type": "u64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "PlatformConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "pubkey" },
+          { "name": "app_count", "type": "u64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "AppStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "deploying" },
+          { "name": "active" },
+          { "name": "paused" },
+          { "name": "dead" }
+        ]
+      }
+    }
+  ]
+}

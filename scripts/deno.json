@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.window", "deno.unstable"]
+  },
+  "imports": {
+    "@cosmjs/proto-signing": "npm:@cosmjs/proto-signing@0.36.2",
+    "@akashnetwork/chain-sdk": "npm:@akashnetwork/chain-sdk@alpha",
+    "long": "npm:long@5.3.2"
+  }
+}

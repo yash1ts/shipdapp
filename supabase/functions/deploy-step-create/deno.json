@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.window", "deno.unstable"]
+  },
+  "imports": {
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.49.1",
+    "@cosmjs/proto-signing": "npm:@cosmjs/proto-signing@0.36.2",
+    "@cosmjs/amino": "npm:@cosmjs/amino@0.36.2",
+    "@akashnetwork/chain-sdk": "npm:@akashnetwork/chain-sdk@alpha",
+    "long": "npm:long@5.3.2"
+  }
+}
