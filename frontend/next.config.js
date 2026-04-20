@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "export",
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
@@ -8,6 +9,7 @@ const nextConfig = {
       tls: false,
       crypto: false,
     };
+    config.externals = [...(config.externals || []), 'pino-pretty', 'encoding'];
     return config;
   },
 };

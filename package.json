@@ -6,10 +6,12 @@
   "scripts": {
     "build:program": "anchor build",
     "test:program": "anchor test",
-    "dev:frontend": "cd frontend && npm run dev",
-    "build:frontend": "cd frontend && npm install && npm run build",
-    "deploy:worker": "cd cloudflare-backend && npm install && npx wrangler deploy",
-    "install:all": "npm install && cd frontend && npm install && cd ../sdk && npm install"
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "dev:worker": "npm run dev --prefix cloudflare-backend",
+    "deploy:worker": "npm run deploy --prefix cloudflare-backend",
+    "build:sdk": "npm run build --prefix sdk",
+    "install:all": "npm install && npm install --prefix frontend && npm install --prefix sdk && npm install --prefix cloudflare-backend"
   },
   "devDependencies": {
     "@anchor-lang/core": "^1.0.0",

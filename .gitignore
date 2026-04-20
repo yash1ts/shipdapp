@@ -13,3 +13,8 @@ akash-mtls-fresh/
 
 # Akash CLI binary at repo root (~175MB); install from releases instead
 /akash
+
+# Build outputs
+out/
+.wrangler/
+dist/

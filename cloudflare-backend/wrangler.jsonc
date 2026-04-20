@@ -89,7 +89,7 @@
 		"CORS_ALLOWED_ORIGINS": "https://shipdapp.com,https://www.shipdapp.com",
 		// Next.js (Pages) origin — visitors hitting this Worker’s `/` get redirected here.
 		// Example: "https://shipdapp.pages.dev" or your production domain if Pages is there.
-		"PUBLIC_FRONTEND_URL": ""
+		"PUBLIC_FRONTEND_URL": "http://shipdapp.com"
 	}
 	/**
 	 * Required secrets (set via `wrangler secret put <NAME>`):
