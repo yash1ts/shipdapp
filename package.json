@@ -8,6 +8,7 @@
     "test:program": "anchor test",
     "dev:frontend": "cd frontend && npm run dev",
     "build:frontend": "cd frontend && npm install && npm run build",
+    "deploy:worker": "cd cloudflare-backend && npm install && npx wrangler deploy",
     "install:all": "npm install && cd frontend && npm install && cd ../sdk && npm install"
   },
   "devDependencies": {
