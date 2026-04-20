@@ -11,15 +11,15 @@ const stats = [
 
 export function StatsBar() {
   return (
-    <section className="py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="py-10">
+      <div className="section-shell">
         <div className="glass-card p-1">
           <div className="grid grid-cols-2 md:grid-cols-4">
             {stats.map((stat, i) => (
               <div
                 key={stat.label}
                 className={`flex items-center gap-3 px-6 py-4 ${
-                  i < stats.length - 1 ? "md:border-r border-white/[0.06]" : ""
+                  i < stats.length - 1 ? "md:border-r border-white/[0.08]" : ""
                 }`}
               >
                 <stat.icon className="w-5 h-5 text-dock-400 flex-shrink-0" />

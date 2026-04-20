@@ -1,0 +1,88 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "cloudflare-backend",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-04-18",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		// The path to the directory containing the `index.html` file to be served at `/`
+		"directory": "./public"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"minify": true,
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "shipdapp-db",
+			"database_id": "175f4766-ae1d-4e81-a52b-b052eeb6acab",
+			"migrations_dir": "drizzle/migrations"
+		}
+	],
+	"workflows": [
+		{
+			"name": "deploy-app",
+			"binding": "DEPLOY_APP_WORKFLOW",
+			"class_name": "DeployAppWorkflow"
+		}
+	],
+	/**
+	 * mTLS binding used by the deployment workflow to PUT the manifest + GET lease status on the
+	 * Akash provider over mutual TLS. Upload the PEMs once, then paste the returned certificate_id
+	 * below:
+	 *
+	 *   npx wrangler mtls-certificate upload \
+	 *     --cert ./akash-mtls.crt.pem \
+	 *     --key ./akash-mtls.key.pem \
+	 *     --name akash-mtls
+	 *
+	 * The uploaded cert+key must match AKASH_MTLS_CERT_PEM / AKASH_MTLS_PUBLIC_KEY_PEM secrets (so
+	 * the on-chain `createCertificate` cert matches what Cloudflare presents on the wire).
+	 */
+	"mtls_certificates": [
+		{
+			"binding": "AKASH_MTLS",
+			"certificate_id": "5173bdd1-113f-4a9e-8628-0d1749380f43"
+		}
+	],
+	"triggers": {
+		"crons": [
+			"*/1 * * * *"
+		]
+	},
+	/**
+	 * Default to the Akash Sandbox-2 playground. Override by setting a `wrangler secret` of the
+	 * same name (or changing this value) when promoting to testnet / mainnet.
+	 */
+	"vars": {
+		"AKASH_MANIFEST_NETWORK": "sandbox-2",
+		// Skip the MIN_PROVIDER_UPTIME gate in the bid-polling loop. Sandbox-2 providers often
+		// report <99% uptime even when healthy, so gating on uptime rejects every bid and the
+		// workflow times out. Flip to "0" (or remove) when moving to mainnet if you want the
+		// default 0.99 threshold back.
+		"AKASH_RELAX_UPTIME": "1"
+	}
+	/**
+	 * Required secrets (set via `wrangler secret put <NAME>`):
+	 *   AKASH_HOT_MNEMONIC          — Akash wallet mnemonic (owner of on-chain cert)
+	 *   AKASH_MTLS_CERT_PEM         — same cert PEM uploaded to AKASH_MTLS binding
+	 *   AKASH_MTLS_PUBLIC_KEY_PEM   — EC public key PEM registered on-chain
+	 *   (alternatively AKASH_MTLS_PEM_BUNDLE — concatenated cert+privkey+pubkey PEMs)
+	 *   SOLANA_RPC_URL              — mainnet-beta/devnet RPC endpoint
+	 *
+	 * Optional tunables (see src/_shared/env.ts for the full list):
+	 *   AKASH_MANIFEST_NETWORK, AKASH_RPC_URL, AKASH_GRPC_URL, AKASH_REST_URL,
+	 *   AKASH_DEPOSIT_UACT, AKASH_BID_WINDOW_MS, AKASH_BID_POLL_MS,
+	 *   AKASH_CERT_WAIT_MS, AKASH_CERT_POLL_MS,
+	 *   AKASH_EXCLUDE_PROVIDERS, AKASH_BID_STRATEGY, MIN_PROVIDER_UPTIME,
+	 *   AKASH_MANIFEST_RETRY_MAX, AKASH_MANIFEST_RETRY_DELAY_MS
+	 */
+}

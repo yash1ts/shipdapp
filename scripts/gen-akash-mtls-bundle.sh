@@ -10,13 +10,15 @@
 #   cert.pem  key.pem  pub.pem  mtls-bundle.pem  README.txt
 #
 # Publish secrets (do NOT commit keys — directory is gitignored):
-#   Supabase Dashboard → Project Settings → Edge Functions → Secrets:
-#     AKASH_MTLS_CERT_PEM, AKASH_MTLS_KEY_PEM, AKASH_MTLS_PUBLIC_KEY_PEM
-#     OR a single AKASH_MTLS_PEM_BUNDLE = contents of mtls-bundle.pem
+#   Cloudflare Worker secrets (from cloudflare-backend/):
+#     npx wrangler secret put AKASH_MTLS_CERT_PEM       < cert.pem
+#     npx wrangler secret put AKASH_MTLS_KEY_PEM        < key.pem
+#     npx wrangler secret put AKASH_MTLS_PUBLIC_KEY_PEM < pub.pem
+#     # OR a single bundle secret (contents of mtls-bundle.pem):
+#     npx wrangler secret put AKASH_MTLS_PEM_BUNDLE     < mtls-bundle.pem
 #
-# CLI (if logged in): multiline PEM is awkward; prefer Dashboard or:
-#   supabase secrets set --env-file path/to/secrets.env
-#   where secrets.env has one var per line (quoted multiline is shell-specific).
+# Also upload the cert+key to the Worker's mTLS binding (see wrangler.jsonc → mtls_certificates):
+#     npx wrangler mtls-certificate upload --cert cert.pem --key key.pem --name akash-mtls
 #
 set -euo pipefail
 
@@ -44,10 +46,15 @@ mkdir -p "${OUT}"
 openssl ecparam -name prime256v1 -genkey -noout -out "${OUT}/key.pem"
 
 # Self-signed cert; CN = wallet address (matches SDK certificate subject).
+# basicConstraints=CA:FALSE is REQUIRED for Cloudflare Workers mTLS binding upload
+# (`wrangler mtls-certificate upload` returns "Missing leaf certificate. [code: 1412]"
+# if the cert is marked CA:TRUE — CF expects an end-entity/leaf cert, not a CA).
+# Akash itself only checks Subject CN + on-chain-registered pubkey, so CA:FALSE is fine.
 if openssl req -help 2>&1 | grep -q -- '-addext'; then
   openssl req -new -x509 -key "${OUT}/key.pem" -out "${OUT}/cert.pem" -days 365 \
     -subj "/CN=${CN}" \
-    -addext "keyUsage=digitalSignature,keyAgreement" \
+    -addext "basicConstraints=critical,CA:FALSE" \
+    -addext "keyUsage=critical,digitalSignature,keyAgreement" \
     -addext "extendedKeyUsage=clientAuth" 2>/dev/null \
     || openssl req -new -x509 -key "${OUT}/key.pem" -out "${OUT}/cert.pem" -days 365 -subj "/CN=${CN}"
 else
@@ -72,8 +79,9 @@ Files:
   pub.pem         — EC PUBLIC KEY (Akash-compatible header)
   mtls-bundle.pem — concat for AKASH_MTLS_PEM_BUNDLE
 
-Do not commit this directory. Set Supabase Edge secrets from these files, then register
-the cert on-chain (deploy-step-cert / check-akash-cert.ts) if not already present.
+Do not commit this directory. Set Cloudflare Worker secrets from these files (wrangler secret put),
+upload the cert+key via \`wrangler mtls-certificate upload\` for the AKASH_MTLS binding, then register
+the cert on-chain (check-akash-cert.ts) if not already present.
 The wallet address in the cert CN is normalized to lowercase (required by the chain).
 EOF
 
@@ -84,4 +92,4 @@ echo "  ${OUT}/pub.pem"
 echo "  ${OUT}/mtls-bundle.pem"
 echo "  ${OUT}/README.txt"
 echo ""
-echo "Next: set AKASH_MTLS_* secrets in Supabase (Dashboard recommended). Do not git add this folder."
+echo "Next: set AKASH_MTLS_* secrets in Cloudflare Worker (wrangler secret put) and upload cert+key via \`wrangler mtls-certificate upload\`. Do not git add this folder."

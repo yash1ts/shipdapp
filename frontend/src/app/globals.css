@@ -20,9 +20,13 @@ html {
 }
 
 body {
-  background: var(--abyss);
+  background:
+    radial-gradient(circle at 10% -10%, rgba(36, 150, 237, 0.12), transparent 35%),
+    radial-gradient(circle at 90% 0%, rgba(20, 184, 158, 0.1), transparent 40%),
+    var(--abyss);
   color: #e2e8f0;
   min-height: 100vh;
+  letter-spacing: 0.01em;
 }
 
 /* Scrollbar */
@@ -43,21 +47,27 @@ body {
 /* Glass card */
 @layer components {
   .glass-card {
-    @apply relative overflow-hidden rounded-xl border border-white/[0.06] bg-abyss-card/80 backdrop-blur-xl;
+    @apply relative overflow-hidden rounded-2xl border border-white/[0.08] bg-abyss-card/80 backdrop-blur-xl;
     box-shadow:
       0 0 0 1px rgba(36, 150, 237, 0.05),
-      0 4px 24px rgba(0, 0, 0, 0.4);
+      0 8px 24px rgba(0, 0, 0, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    transition:
+      border-color 220ms ease,
+      box-shadow 220ms ease,
+      transform 220ms ease;
   }
   .glass-card:hover {
     border-color: rgba(36, 150, 237, 0.15);
     box-shadow:
       0 0 0 1px rgba(36, 150, 237, 0.1),
-      0 8px 40px rgba(0, 0, 0, 0.5),
+      0 12px 32px rgba(0, 0, 0, 0.45),
       0 0 30px rgba(36, 150, 237, 0.06);
+    transform: translateY(-2px);
   }
 
   .container-card {
-    @apply glass-card p-6 transition-all duration-300;
+    @apply glass-card p-6;
     background: linear-gradient(
       145deg,
       rgba(15, 23, 42, 0.9) 0%,
@@ -76,10 +86,12 @@ body {
   }
 
   .btn-dock {
-    @apply relative inline-flex items-center gap-2 rounded-lg px-5 py-2.5 font-medium text-sm transition-all duration-200;
+    @apply relative inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 font-medium text-sm transition-all duration-200;
     background: linear-gradient(135deg, #2496ed 0%, #1268b3 100%);
     color: white;
-    box-shadow: 0 0 20px rgba(36, 150, 237, 0.2);
+    box-shadow:
+      0 8px 18px rgba(7, 39, 67, 0.45),
+      0 0 20px rgba(36, 150, 237, 0.15);
   }
   .btn-dock:hover {
     box-shadow: 0 0 30px rgba(36, 150, 237, 0.4);
@@ -90,10 +102,12 @@ body {
   }
 
   .btn-ocean {
-    @apply relative inline-flex items-center gap-2 rounded-lg px-5 py-2.5 font-medium text-sm transition-all duration-200;
+    @apply relative inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 font-medium text-sm transition-all duration-200;
     background: linear-gradient(135deg, #14b89e 0%, #0d9481 100%);
     color: white;
-    box-shadow: 0 0 20px rgba(20, 184, 158, 0.2);
+    box-shadow:
+      0 8px 18px rgba(4, 47, 46, 0.4),
+      0 0 20px rgba(20, 184, 158, 0.15);
   }
   .btn-ocean:hover {
     box-shadow: 0 0 30px rgba(20, 184, 158, 0.4);
@@ -101,7 +115,7 @@ body {
   }
 
   .btn-ghost {
-    @apply inline-flex items-center gap-2 rounded-lg border border-white/10 px-5 py-2.5 font-medium text-sm text-slate-300 transition-all duration-200 hover:border-dock-400/30 hover:text-white hover:bg-white/[0.03];
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 font-medium text-sm text-slate-300 transition-all duration-200 hover:border-dock-400/30 hover:text-white hover:bg-white/[0.03];
   }
 
   .tag-status {
@@ -121,7 +135,7 @@ body {
   }
 
   .input-dock {
-    @apply w-full rounded-lg border border-white/10 bg-abyss/80 px-4 py-3 text-sm text-slate-200 placeholder:text-slate-500 outline-none transition-all duration-200;
+    @apply w-full rounded-xl border border-white/10 bg-abyss/80 px-4 py-3 text-sm text-slate-200 placeholder:text-slate-500 outline-none transition-all duration-200;
   }
   .input-dock:focus {
     @apply border-dock-400/40 ring-1 ring-dock-400/20;
@@ -132,6 +146,18 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  .section-shell {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-title {
+    @apply text-2xl sm:text-3xl font-semibold tracking-tight text-white;
+  }
+
+  .section-subtitle {
+    @apply mt-2 text-sm sm:text-base text-slate-400;
   }
 }
 

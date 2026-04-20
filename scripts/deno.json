@@ -3,6 +3,7 @@
     "strict": true,
     "lib": ["deno.window", "deno.unstable"]
   },
+  "unstable": ["sloppy-imports"],
   "imports": {
     "@cosmjs/proto-signing": "npm:@cosmjs/proto-signing@0.36.2",
     "@akashnetwork/chain-sdk": "npm:@akashnetwork/chain-sdk@alpha",

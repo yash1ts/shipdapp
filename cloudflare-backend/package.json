@@ -1,0 +1,30 @@
+{
+  "name": "cloudflare-backend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "test": "vitest",
+    "cf-typegen": "wrangler types",
+    "postinstall": "patch-package"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.12.4",
+    "@types/node": "^25.6.0",
+    "drizzle-kit": "^0.31.10",
+    "patch-package": "^8.0.1",
+    "typescript": "^5.5.2",
+    "vitest": "~3.2.0",
+    "wrangler": "^4.83.0"
+  },
+  "dependencies": {
+    "@akashnetwork/chain-sdk": "^1.0.0-alpha.30",
+    "@cosmjs/amino": "^0.36.2",
+    "bs58": "^6.0.0",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.12.14",
+    "long": "^5.3.2"
+  }
+}

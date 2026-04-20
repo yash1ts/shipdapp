@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { Navbar } from "@/components/Navbar";
-import { WaveBackground } from "@/components/WaveBackground";
+import AnimatedShaderBackground from "@/components/ui/animated-shader-background";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,9 +23,9 @@ export default function RootLayout({
       <body className={`${inter.className} bg-abyss min-h-screen antialiased`}>
         <Providers>
           <div className="relative min-h-screen flex flex-col">
+            <AnimatedShaderBackground />
             <Navbar />
             <main className="flex-1 relative z-10">{children}</main>
-            <WaveBackground />
           </div>
         </Providers>
       </body>

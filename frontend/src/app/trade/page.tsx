@@ -53,14 +53,14 @@ export default function TradePage() {
   const [donateAmount, setDonateAmount] = useState("");
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 relative">
+    <div className="section-shell py-16 relative">
       {/* Glow */}
       <div className="absolute top-0 right-1/4 w-[500px] h-[300px] bg-ocean-400/5 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Token List */}
         <div className="lg:col-span-1">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-semibold tracking-tight text-white mb-4 flex items-center gap-2">
             <Droplets className="w-5 h-5 text-dock-400" />
             App Tokens
           </h2>
@@ -108,7 +108,7 @@ export default function TradePage() {
 
         {/* Swap Panel */}
         <div className="lg:col-span-1">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-semibold tracking-tight text-white mb-4 flex items-center gap-2">
             <ArrowDownUp className="w-5 h-5 text-dock-400" />
             Swap
           </h2>
@@ -208,7 +208,7 @@ export default function TradePage() {
 
         {/* Vault / Donate Panel */}
         <div className="lg:col-span-1">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-semibold tracking-tight text-white mb-4 flex items-center gap-2">
             <Fuel className="w-5 h-5 text-dock-400" />
             Hosting Vault
           </h2>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Ship,
   Container,
+  Coins,
   Rocket,
   FileCode,
   Info,
@@ -14,10 +15,7 @@ import {
   Copy,
   RefreshCw,
 } from "lucide-react";
-import {
-  getBrowserSupabase,
-  supabaseEnvReady,
-} from "@/lib/supabase-browser";
+import { apiClient, apiEnvReady } from "@/lib/api-client";
 
 type FlowStep =
   | "details"
@@ -46,6 +44,13 @@ type StatusPayload = {
   lastError?: string | null;
 };
 
+const DEFAULT_MEME_CONFIG = {
+  supply: "1000000000",
+  initialMcapSol: "24",
+  migrationMcapSol: "96",
+  fundingFeePct: "5",
+} as const;
+
 export default function LaunchPage() {
   const [step, setStep] = useState<FlowStep>("details");
   const [form, setForm] = useState({
@@ -65,6 +70,14 @@ export default function LaunchPage() {
   } | null>(null);
   const [statusBusy, setStatusBusy] = useState(false);
   const [statusHint, setStatusHint] = useState<string | null>(null);
+  const [memeConfig, setMemeConfig] = useState({
+    tokenName: "",
+    symbol: "",
+    supply: DEFAULT_MEME_CONFIG.supply,
+    initialMcapSol: DEFAULT_MEME_CONFIG.initialMcapSol,
+    migrationMcapSol: DEFAULT_MEME_CONFIG.migrationMcapSol,
+    fundingFeePct: DEFAULT_MEME_CONFIG.fundingFeePct,
+  });
   const copyText = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -74,13 +87,12 @@ export default function LaunchPage() {
   };
 
   const checkDeploymentStatus = async () => {
-    if (!deploymentId || !supabaseEnvReady()) return;
+    if (!deploymentId || !apiEnvReady()) return;
     setStatusBusy(true);
     setStatusHint(null);
     setErrorMsg(null);
     try {
-      const supabase = getBrowserSupabase();
-      const { data, error } = await supabase.functions.invoke(
+      const { data, error } = await apiClient.invoke(
         "deployments-status",
         { body: { deployment_id: deploymentId } }
       );
@@ -125,9 +137,9 @@ export default function LaunchPage() {
   };
 
   const handleInit = async () => {
-    if (!supabaseEnvReady()) {
+    if (!apiEnvReady()) {
       setErrorMsg(
-        "Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY for Launch."
+        "Set NEXT_PUBLIC_API_URL for Launch."
       );
       setStep("error");
       return;
@@ -137,8 +149,7 @@ export default function LaunchPage() {
     setStep("init_loading");
     try {
       const port = Number(form.port) || 3000;
-      const supabase = getBrowserSupabase();
-      const { data, error } = await supabase.functions.invoke(
+      const { data, error } = await apiClient.invoke(
         "deployments-init",
         {
           body: {
@@ -165,20 +176,25 @@ export default function LaunchPage() {
     }
   };
 
-  const canStart = form.name.trim() && form.dockerImage.trim() && form.description.trim();
+  const canStart =
+    form.name.trim() &&
+    form.dockerImage.trim() &&
+    form.description.trim() &&
+    memeConfig.tokenName.trim() &&
+    memeConfig.symbol.trim();
 
   const qrUrl = (text: string) =>
     `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(text)}`;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-16 relative">
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-20 relative">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-dock-400/8 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="text-center mb-12 relative">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-dock-400 to-dock-600 shadow-dock-lg mb-6">
           <Ship className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-3xl font-bold text-white mb-3">
+        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white mb-3">
           Ship a New <span className="glow-text">Container</span>
         </h1>
         <p className="text-slate-400 max-w-lg mx-auto">
@@ -188,7 +204,7 @@ export default function LaunchPage() {
       </div>
 
       {step === "details" && (
-        <div className="container-card p-8 relative">
+        <div className="container-card p-8 sm:p-9 relative">
           <div className="absolute top-0 right-0 w-32 h-32 bg-dock-400/5 rounded-bl-[80px] pointer-events-none" />
 
           <div className="space-y-6 relative">
@@ -258,6 +274,57 @@ export default function LaunchPage() {
               />
             </div>
 
+            <div className="rounded-lg border border-ocean-400/20 bg-ocean-500/5 p-4 space-y-4">
+              <div>
+                <p className="flex items-center gap-2 text-sm font-medium text-slate-200">
+                  <Coins className="w-4 h-4 text-ocean-300" />
+                  App token
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-400 mb-1 block">
+                    Token Name
+                  </label>
+                  <input
+                    className="input-dock"
+                    placeholder="e.g. DockCat"
+                    maxLength={32}
+                    value={memeConfig.tokenName}
+                    onChange={(e) =>
+                      setMemeConfig((prev) => ({ ...prev, tokenName: e.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 mb-1 block">
+                    Symbol
+                  </label>
+                  <input
+                    className="input-dock"
+                    placeholder="e.g. DOCK"
+                    maxLength={10}
+                    value={memeConfig.symbol}
+                    onChange={(e) =>
+                      setMemeConfig((prev) => ({
+                        ...prev,
+                        symbol: e.target.value.toUpperCase(),
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-white/10 bg-black/20 p-3">
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Platform defaults are used for supply, initial valuation,
+                  migration threshold, and app funding fee (5%) to keep launches
+                  consistent.
+                </p>
+              </div>
+            </div>
+
             <div className="rounded-lg border border-dock-400/10 bg-dock-400/5 p-4 flex gap-3">
               <Info className="w-5 h-5 text-dock-400 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-slate-400 space-y-1 text-left">
@@ -293,8 +360,11 @@ export default function LaunchPage() {
               onClick={handleInit}
             >
               <Ship className="w-5 h-5" />
-              Generate funding wallet
+              Launch
             </button>
+            <p className="text-xs text-slate-500 text-center">
+              Full one-click deploy + token launch flow will be merged together.
+            </p>
           </div>
         </div>
       )}
@@ -308,11 +378,18 @@ export default function LaunchPage() {
           <p className="text-slate-400 text-sm">
             Generating a Solana keypair for your app.
           </p>
+          <p className="text-xs text-slate-500 mt-3">
+            Token launch will be merged into this same one-click flow using{" "}
+            <span className="text-slate-300">
+              {memeConfig.symbol || "your token"}
+            </span>{" "}
+            settings.
+          </p>
         </div>
       )}
 
       {step === "awaiting_funds" && fundingAddress && (
-        <div className="container-card p-8 space-y-8">
+        <div className="container-card p-8 sm:p-9 space-y-8">
           <div className="text-center">
             <h3 className="text-xl font-semibold text-white mb-1">
               Fund Your App
@@ -320,6 +397,20 @@ export default function LaunchPage() {
             <p className="text-slate-400 text-sm">
               Send <strong className="text-slate-300">{minSol} SOL</strong>{" "}
               (devnet) to the address below. The cron auto-deploys once funded.
+            </p>
+            <p className="text-xs text-slate-500 mt-2">
+              Meme-token launch will run together with deployment in one click
+              (next update).
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Config:{" "}
+              <span className="text-slate-300">
+                {memeConfig.tokenName || "Token"} ({memeConfig.symbol || "TKN"}){" "}
+                • supply {memeConfig.supply || "0"} • init MCAP{" "}
+                {memeConfig.initialMcapSol || "0"} SOL • migrate MCAP{" "}
+                {memeConfig.migrationMcapSol || "0"} SOL • app funding fee{" "}
+                {memeConfig.fundingFeePct || "0"}%
+              </span>
             </p>
           </div>
 
@@ -386,39 +477,55 @@ export default function LaunchPage() {
       )}
 
       {step === "done" && doneSummary && (
-        <div className="container-card p-12 text-center">
-          <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-white mb-2">Launched</h3>
-          <p className="text-slate-400 text-sm mb-4">
-            Akash deployment{" "}
-            <code className="text-dock-300 text-xs break-all">
-              {doneSummary.akashDeploymentId ?? "—"}
-            </code>
-            {doneSummary.dseq && (
-              <>
-                <br />
-                <span className="text-slate-500">dseq</span>{" "}
-                <code className="text-slate-300">{doneSummary.dseq}</code>
-              </>
-            )}
-          </p>
-          <div className="flex gap-3 justify-center flex-wrap">
-            <a href="/" className="btn-dock">
-              App Store
-            </a>
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => {
-                setStep("details");
-                setDeploymentId(null);
-                setFundingAddress(null);
-                setDoneSummary(null);
-                setStatusHint(null);
-              }}
-            >
-              Ship another
-            </button>
+        <div className="space-y-6">
+          <div className="container-card p-12 text-center">
+            <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">Launched</h3>
+            <p className="text-slate-400 text-sm mb-4">
+              Akash deployment{" "}
+              <code className="text-dock-300 text-xs break-all">
+                {doneSummary.akashDeploymentId ?? "—"}
+              </code>
+              {doneSummary.dseq && (
+                <>
+                  <br />
+                  <span className="text-slate-500">dseq</span>{" "}
+                  <code className="text-slate-300">{doneSummary.dseq}</code>
+                </>
+              )}
+            </p>
+            <div className="flex gap-3 justify-center flex-wrap">
+              <a href="/" className="btn-dock">
+                App Store
+              </a>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => {
+                  setStep("details");
+                  setDeploymentId(null);
+                  setFundingAddress(null);
+                  setDoneSummary(null);
+                  setStatusHint(null);
+                }}
+              >
+                Ship another
+              </button>
+            </div>
+          </div>
+
+          <div className="container-card p-7 sm:p-8 text-center">
+            <h4 className="text-lg font-semibold text-white mb-2">Next</h4>
+            <p className="text-sm text-slate-400">
+              Deployment workflow and meme-token launch will run together in a
+              single one-click action in the next update.
+            </p>
+            <p className="text-xs text-slate-500 mt-3">
+              Selected token:{" "}
+              <span className="text-slate-300">
+                {memeConfig.tokenName || "Token"} ({memeConfig.symbol || "TKN"})
+              </span>
+            </p>
           </div>
         </div>
       )}

@@ -1,0 +1,81 @@
+diff --git a/node_modules/cockatiel/dist/common/abort.js b/node_modules/cockatiel/dist/common/abort.js
+index 8047990..2e38439 100644
+--- a/node_modules/cockatiel/dist/common/abort.js
++++ b/node_modules/cockatiel/dist/common/abort.js
+@@ -2,10 +2,32 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.deriveAbortController = exports.abortedSignal = exports.neverAbortedSignal = void 0;
+ const Event_1 = require("./Event");
+-exports.neverAbortedSignal = new AbortController().signal;
+-const cancelledSrc = new AbortController();
+-cancelledSrc.abort();
+-exports.abortedSignal = cancelledSrc.signal;
++// Cloudflare Workers disallow side-effects at module global scope ("generating random values"
++// when calling `new AbortController()` / `.abort()`). Defer signal creation via Proxy so the
++// exports behave like real AbortSignals but only allocate on first use (inside a request/step).
++const makeLazySignal = (init) => {
++    let real;
++    const get = () => (real ?? (real = init()));
++    return new Proxy({}, {
++        get(_t, prop) {
++            const target = get();
++            const v = target[prop];
++            return typeof v === 'function' ? v.bind(target) : v;
++        },
++        has(_t, prop) { return prop in get(); },
++        getOwnPropertyDescriptor(_t, prop) {
++            const target = get();
++            return Object.getOwnPropertyDescriptor(target, prop)
++                || Object.getOwnPropertyDescriptor(Object.getPrototypeOf(target), prop);
++        },
++    });
++};
++exports.neverAbortedSignal = makeLazySignal(() => new AbortController().signal);
++exports.abortedSignal = makeLazySignal(() => {
++    const c = new AbortController();
++    c.abort();
++    return c.signal;
++});
+ const noop = () => { };
+ /**
+  * Creates a new AbortController that is aborted when the parent signal aborts.
+diff --git a/node_modules/cockatiel/dist/esm/common/abort.js b/node_modules/cockatiel/dist/esm/common/abort.js
+index 07a4e1c..0dcae72 100644
+--- a/node_modules/cockatiel/dist/esm/common/abort.js
++++ b/node_modules/cockatiel/dist/esm/common/abort.js
+@@ -1,8 +1,31 @@
+ import { onAbort } from './Event';
+-export const neverAbortedSignal = new AbortController().signal;
+-const cancelledSrc = new AbortController();
+-cancelledSrc.abort();
+-export const abortedSignal = cancelledSrc.signal;
++
++// Cloudflare Workers disallow side-effects at module global scope ("generating random values"
++// when calling `new AbortController()` / `.abort()`). Defer signal creation via Proxy so the
++// exports behave like real AbortSignals but only allocate on first use (inside a request/step).
++const makeLazySignal = (init) => {
++    let real;
++    const get = () => (real ??= init());
++    return new Proxy({}, {
++        get(_t, prop) {
++            const target = get();
++            const v = target[prop];
++            return typeof v === 'function' ? v.bind(target) : v;
++        },
++        has(_t, prop) { return prop in get(); },
++        getOwnPropertyDescriptor(_t, prop) {
++            const target = get();
++            return Object.getOwnPropertyDescriptor(target, prop)
++                ?? Object.getOwnPropertyDescriptor(Object.getPrototypeOf(target), prop);
++        },
++    });
++};
++export const neverAbortedSignal = makeLazySignal(() => new AbortController().signal);
++export const abortedSignal = makeLazySignal(() => {
++    const c = new AbortController();
++    c.abort();
++    return c.signal;
++});
+ const noop = () => { };
+ /**
+  * Creates a new AbortController that is aborted when the parent signal aborts.

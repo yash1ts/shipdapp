@@ -6,7 +6,6 @@ target/
 .env
 *.log
 .DS_Store
-supabase/.temp/
 
 # Local Akash mTLS material (private keys); never commit
 akash-mtls-fresh/

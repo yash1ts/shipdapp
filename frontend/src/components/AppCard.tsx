@@ -46,7 +46,7 @@ export function AppCard({
   const cfg = statusConfig[status];
 
   return (
-    <div className="container-card group">
+    <div className="container-card group h-full">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -54,7 +54,7 @@ export function AppCard({
             <Container className="w-5 h-5 text-dock-300" />
           </div>
           <div>
-            <h3 className="font-semibold text-white group-hover:text-dock-300 transition-colors">
+            <h3 className="font-semibold text-white group-hover:text-dock-300 transition-colors tracking-tight">
               {name}
             </h3>
             <p className="text-xs text-slate-500 font-mono">{creator}</p>
@@ -67,7 +67,7 @@ export function AppCard({
       </div>
 
       {/* Description */}
-      <p className="text-sm text-slate-400 mb-4 leading-relaxed">
+      <p className="text-sm text-slate-400 mb-5 leading-relaxed min-h-[42px]">
         {description}
       </p>
 
@@ -78,7 +78,7 @@ export function AppCard({
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-3 mb-5">
         <div className="rounded-lg bg-abyss/40 border border-white/[0.04] p-3">
           <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
             <TrendingUp className="w-3 h-3" />
@@ -98,7 +98,7 @@ export function AppCard({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-2 border-t border-white/[0.04]">
+      <div className="flex items-center gap-2 pt-3 border-t border-white/[0.05]">
         <Link href="/trade" className="btn-dock flex-1 justify-center text-xs py-2">
           <Wallet className="w-3.5 h-3.5" />
           Trade {tokenSymbol}

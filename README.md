@@ -11,7 +11,7 @@ A platform where anyone can deploy a full-stack Dockerized app to decentralized 
 ## Architecture
 
 ```
-Frontend (Next.js)  →  Supabase (Postgres + Edge Functions)  →  Solana Devnet
+Frontend (Next.js)  →  Cloudflare Worker (D1 + Workflows)  →  Solana Devnet
                                                           →  Akash Sandbox-2 (playground)
                                                           →  Meteora DBC (Devnet)
 ```
@@ -21,7 +21,7 @@ Frontend (Next.js)  →  Supabase (Postgres + Edge Functions)  →  Solana Devne
 | Solana Programs + Token-2022 | Devnet | Free (airdrop SOL) |
 | Meteora DBC Bonding Curves | Devnet | Free |
 | Akash Deployments | **Sandbox-2** (default) or testnet-oracle | Free playground / test funds |
-| Supabase | Hosted project | Free tier available |
+| Cloudflare Worker + D1 | Workers | Free tier available |
 | Frontend | localhost / Vercel | Free |
 
 ---
@@ -39,9 +39,10 @@ shipdapp/
 │       ├── createBondingCurve.ts # Meteora DBC integration
 │       ├── generateSDL.ts       # Akash SDL template generator
 │       └── pda.ts               # PDA derivation helpers
-├── supabase/
-│   ├── migrations/          # Postgres schema (e.g. app_deployments)
-│   └── functions/           # Edge: deployments-init, deployments-status, deploy-akt
+├── cloudflare-backend/      # Cloudflare Worker API + Workflow
+│   ├── src/                 # Worker routes, Akash orchestrator, deploy workflow
+│   ├── drizzle/migrations/  # D1 (SQLite) schema (e.g. app_deployments)
+│   └── wrangler.jsonc       # Bindings: D1, Workflows, mTLS cert, cron trigger
 ├── frontend/                # Next.js web app
 │   └── src/
 │       ├── app/                 # App router pages
@@ -63,7 +64,7 @@ shipdapp/
 - Rust + Cargo
 - Anchor CLI (`avm install latest && avm use latest`)
 - Solana CLI (`solana config set --url devnet`)
-- Optional: [Supabase CLI](https://supabase.com/docs/guides/cli) for migrations and `functions deploy`
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/) (`npm i -g wrangler`) for the Cloudflare Worker + D1 migrations
 
 ### 1. Install Dependencies
 
@@ -94,28 +95,31 @@ anchor deploy
 anchor build
 ```
 
-### 3. Supabase + Launch (Akash fund-then-deploy)
+### 3. Cloudflare Worker + Launch (Akash fund-then-deploy)
 
-Apply migrations and deploy Edge functions (from repo root):
+Apply D1 migrations and deploy the Worker (from `cloudflare-backend/`):
 
 ```bash
-npx supabase link --project-ref <your-ref>
-npx supabase db push
-npx supabase functions deploy deployments-init --no-verify-jwt --yes --use-api
-npx supabase functions deploy deployments-status --no-verify-jwt --yes --use-api
-npx supabase functions deploy deploy-akt --no-verify-jwt --yes --use-api
+cd cloudflare-backend
+npm install
+npx wrangler d1 migrations apply shipdapp-db --remote
+npx wrangler deploy
 ```
 
-In the **Supabase Dashboard → Edge Functions → Secrets**, set at least: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `MNEMONIC_ENCRYPTION_KEY_B64`, `SOLANA_RPC_URL` (see `supabase/functions/deploy-akt/README.md`).
+Set Worker secrets via `wrangler secret put <NAME>` (see `cloudflare-backend/wrangler.jsonc` for the full list):
 
-**Launch page (`/launch`):** The browser calls Supabase Edge at `…/functions/v1/{deployments-init,deployments-status,deploy-akt}`. Keep **`verify_jwt = false`** for those functions in **`supabase/config.toml`** and redeploy, or OPTIONS preflight can fail with a misleading CORS error. Set **`frontend/.env.local`**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Fund each launch’s **`akash1…`** with sandbox **uAKT** before deploy.
+- `AKASH_HOT_MNEMONIC` — Akash hot wallet mnemonic (owner of on-chain cert)
+- `AKASH_MTLS_CERT_PEM`, `AKASH_MTLS_PUBLIC_KEY_PEM` (or `AKASH_MTLS_PEM_BUNDLE`) — must match the cert uploaded via `wrangler mtls-certificate upload` and registered on-chain
+- `SOLANA_RPC_URL` — devnet/mainnet-beta RPC endpoint
+
+**Launch page (`/launch`):** The browser calls the Worker at `…/api/{deployments-init,deployments-status,deploy-akt}`. The durable `DeployAppWorkflow` (bound as `DEPLOY_APP_WORKFLOW`) runs the cert → create → manifest steps. Set **`frontend/.env.local`**: `NEXT_PUBLIC_API_URL` to your Worker URL. Fund each launch's **`akash1…`** with sandbox **uAKT** before deploy.
 
 ### 4. Start Frontend
 
 ```bash
 cd frontend
 cp .env.example .env.local
-# Set NEXT_PUBLIC_SUPABASE_* and NEXT_PUBLIC_SHIPDAPP_PROGRAM_ID
+# Set NEXT_PUBLIC_API_URL and NEXT_PUBLIC_SHIPDAPP_PROGRAM_ID
 npm run dev
 # Open http://localhost:3000
 ```
@@ -127,7 +131,7 @@ npm run dev
 1. **Ship a Container** — User provides a Docker image URI
 2. **Token Created** — Token-2022 mint with 2% transfer fee on Solana devnet
 3. **Bonding Curve** — Meteora DBC pool created for price discovery
-4. **Akash Deploy** — On-chain deploy via **Supabase Edge** (`/launch`: init → fund → `deploy-akt`)
+4. **Akash Deploy** — On-chain deploy via **Cloudflare Worker + Workflow** (`/launch`: init → fund → `deploy-akt`)
 5. **Self-Funding** — Transfer fees from token trades flow into hosting vault
 6. **Lifecycle** — Popular apps stay alive, unfunded apps pause/die naturally
 
@@ -137,8 +141,8 @@ npm run dev
 
 - **Solana** — Anchor framework, Token-2022 (transfer fee extension)
 - **Meteora DBC** — Dynamic bonding curve for token price discovery
-- **Akash Network** — Decentralized cloud ([Sandbox-2](https://github.com/akash-network/net/tree/main/sandbox-2) playground; legacy Sandbox-1 retired after v2.0 / Twilight-era upgrades). Edge/scripts use **`@akashnetwork/chain-sdk@alpha`** on npm (currently tracks the latest **1.0.0-alpha.\*** line; the `latest` dist-tag is stale) plus **CosmJS 0.36.x** to match chain-sdk’s peer range.
-- **Supabase** — Postgres + Edge Functions (deploy orchestration)
+- **Akash Network** — Decentralized cloud ([Sandbox-2](https://github.com/akash-network/net/tree/main/sandbox-2) playground; legacy Sandbox-1 retired after v2.0 / Twilight-era upgrades). Worker/scripts use **`@akashnetwork/chain-sdk@alpha`** on npm (currently tracks the latest **1.0.0-alpha.\*** line; the `latest` dist-tag is stale) plus **CosmJS 0.36.x** to match chain-sdk's peer range.
+- **Cloudflare Workers + D1 + Workflows** — API, SQLite database, and durable multi-step Akash deploy orchestration (with `mtls_certificates` binding for provider mTLS)
 - **Next.js 14** — Frontend with App Router
 - **Tailwind CSS** — Dark web3 + Docker/ship theme
 

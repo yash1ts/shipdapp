@@ -20,7 +20,7 @@ ROOT         := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 DENO         ?= npx --yes deno@2
 DENO_FLAGS   := run -A -c $(ROOT)/scripts/deno.json
 
-# Akash chain (matches supabase/functions/_shared/akashEndpoints.ts defaults)
+# Akash chain (matches cloudflare-backend/src/_shared/akashEndpoints.ts defaults)
 AKASH_CHAIN_ID       ?= sandbox-2
 AKASH_RPC_URL        ?= https://rpc.sandbox-2.aksh.pw:443
 AKASH_GRPC_URL       ?= http://grpc.sandbox-2.aksh.pw:9090
@@ -51,7 +51,7 @@ DEPLOY_PORT          ?= 3000
 BME_AMOUNT           ?=
 
 .PHONY: help env-akash-print env-deno-print rpc-check grpc-note cert-check \
-	deploy-create verify-mtls gen-mtls write-secrets test-mtls-probe \
+	deploy-create verify-mtls gen-mtls test-mtls-probe \
 	akash-cert-list akash-bids-open providers-list cert-revoke-serial \
 	bme-burn-uact bme-mint-uact
 
@@ -66,7 +66,6 @@ help:
 	@echo "  make deploy-create       create-akash-deployment.ts (needs AKASH_HOT_MNEMONIC)"
 	@echo "  make verify-mtls DSEQ=n verify-provider-mtls.ts --sync-url-from-chain"
 	@echo "  make gen-mtls AKASH_OWNER=akash1…  ./scripts/gen-akash-mtls-bundle.sh"
-	@echo "  make write-secrets       .secrets.mtls.env from MTLS_BUNDLE"
 	@echo "  make test-mtls-probe     curl lease/status (needs DSEQ, PROVIDER, AKASH_OWNER)"
 	@echo "  make akash-cert-list     akash query cert list --state valid"
 	@echo "  make akash-bids-open     akash query market bid list --state open (needs DSEQ, AKASH_OWNER)"
@@ -132,9 +131,6 @@ verify-mtls:
 gen-mtls:
 	@test -n "$(AKASH_OWNER)" || { echo "ERROR: pass AKASH_OWNER=akash1… (CN for cert; usually hot wallet)"; exit 1; }
 	"$(ROOT)/scripts/gen-akash-mtls-bundle.sh" "$(AKASH_OWNER)"
-
-write-secrets:
-	"$(ROOT)/scripts/write-mtls-supabase-env.sh" "$(MTLS_BUNDLE)"
 
 # Requires: DSEQ, PROVIDER (akash1…), AKASH_OWNER; uses cert/key next to bundle dir
 test-mtls-probe:
