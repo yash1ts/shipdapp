@@ -15,7 +15,9 @@ import {
   Copy,
   RefreshCw,
 } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { apiClient, apiEnvReady } from "@/lib/api-client";
+import { useAuth } from "@/components/AuthProvider";
 
 type FlowStep =
   | "details"
@@ -52,6 +54,8 @@ const DEFAULT_MEME_CONFIG = {
 } as const;
 
 export default function LaunchPage() {
+  const { publicKey } = useWallet();
+  const { token, status: authStatus, signIn, error: authError } = useAuth();
   const [step, setStep] = useState<FlowStep>("details");
   const [form, setForm] = useState({
     name: "",
@@ -144,6 +148,13 @@ export default function LaunchPage() {
       setStep("error");
       return;
     }
+    if (!token) {
+      setErrorMsg(
+        "Sign in with your wallet before launching so the app is linked to you."
+      );
+      setStep("error");
+      return;
+    }
     setErrorMsg(null);
     setStatusHint(null);
     setStep("init_loading");
@@ -152,11 +163,14 @@ export default function LaunchPage() {
       const { data, error } = await apiClient.invoke(
         "deployments-init",
         {
+          token,
           body: {
             appName: form.name.trim(),
             description: form.description.trim(),
             dockerImage: form.dockerImage.trim(),
             port,
+            tokenName: memeConfig.tokenName.trim() || undefined,
+            tokenSymbol: memeConfig.symbol.trim() || undefined,
           },
         }
       );
@@ -177,6 +191,8 @@ export default function LaunchPage() {
   };
 
   const canStart =
+    Boolean(publicKey) &&
+    authStatus === "authenticated" &&
     form.name.trim() &&
     form.dockerImage.trim() &&
     form.description.trim() &&
@@ -353,6 +369,32 @@ export default function LaunchPage() {
                 </ol>
               </div>
             </div>
+
+            {!publicKey ? (
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200/90 text-center">
+                Connect a wallet to launch — your wallet owns the app and will
+                see it on the My Account page.
+              </div>
+            ) : authStatus !== "authenticated" ? (
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200/90 text-center space-y-2">
+                <div>
+                  Sign a message to prove you own this wallet before launching.
+                  {authError ? (
+                    <span className="block text-red-300 mt-1">{authError}</span>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  className="btn-ghost text-xs py-1.5 px-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={authStatus === "signing_in"}
+                  onClick={() => void signIn()}
+                >
+                  {authStatus === "signing_in"
+                    ? "Waiting for wallet…"
+                    : "Sign in with wallet"}
+                </button>
+              </div>
+            ) : null}
 
             <button
               className="btn-dock w-full justify-center text-base py-3.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none"

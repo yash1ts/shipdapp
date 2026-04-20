@@ -7,6 +7,8 @@
 export type Env = {
 	/** D1 binding (wrangler.jsonc) */
 	DB: D1Database;
+	/** KV namespace for SIWS single-use nonces (see auth/siws.ts). */
+	AUTH_KV: KVNamespace;
 	/** Cloudflare Workflow binding for `DeployAppWorkflow` (wrangler.jsonc). */
 	DEPLOY_APP_WORKFLOW: Workflow<{ deploymentId: string }>;
 	/**
@@ -22,6 +24,16 @@ export type Env = {
 
 	SOLANA_RPC_URL: string;
 	AKASH_HOT_MNEMONIC: string;
+	/** HS256 signing key for SIWS session JWTs. Set via `wrangler secret put AUTH_JWT_SECRET`. */
+	AUTH_JWT_SECRET: string;
+
+	/**
+	 * Comma-separated list of origins allowed to call the API in a browser (e.g.
+	 * `https://shipdapp.xyz,https://staging.shipdapp.xyz`). Leave unset during local dev — the
+	 * worker falls back to localhost origins. Non-browser clients (curl, other workers) are not
+	 * affected by CORS at all; this only gates browser requests.
+	 */
+	CORS_ALLOWED_ORIGINS?: string;
 
 	/** Public key PEM (same bundle that produced the uploaded mTLS binding). Used to confirm cert is on-chain. */
 	AKASH_MTLS_CERT_PEM?: string;

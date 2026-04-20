@@ -1,6 +1,12 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
+export const users = sqliteTable('users', {
+	walletAddress: text('wallet_address').primaryKey(),
+	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
+});
+
 export const appDeployments = sqliteTable('app_deployments', {
 	id: text('id')
 		.primaryKey()
@@ -24,6 +30,12 @@ export const appDeployments = sqliteTable('app_deployments', {
 	// Cloudflare Workflows instance id for the in-flight / most recent DeployAppWorkflow run.
 	// Used by GET /api/deployments-status/:id to surface live step state.
 	workflowInstanceId: text('workflow_instance_id'),
+	// Wallet address (base58 Solana pubkey) of the user who initiated the launch. References
+	// users.wallet_address. Nullable for pre-users rows migrated from before this column existed.
+	ownerWallet: text('owner_wallet').references(() => users.walletAddress),
+	tokenName: text('token_name'),
+	tokenSymbol: text('token_symbol'),
+	tokenMint: text('token_mint'),
 	createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 	updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now'))`),
 });

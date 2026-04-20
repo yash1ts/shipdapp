@@ -3,7 +3,8 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { Anchor, Ship, Boxes } from "lucide-react";
+import { Anchor, Ship, Boxes, UserCircle2 } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const WalletMultiButton = dynamic(
   () =>
@@ -15,6 +16,7 @@ const WalletMultiButton = dynamic(
 
 export function Navbar() {
   const pathname = usePathname();
+  const { connected } = useWallet();
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/[0.08] bg-abyss/80 backdrop-blur-xl">
@@ -53,6 +55,15 @@ export function Navbar() {
             >
               Trade
             </NavLink>
+            {connected && (
+              <NavLink
+                href="/account"
+                active={pathname.startsWith("/account")}
+                icon={<UserCircle2 className="w-4 h-4" />}
+              >
+                My Account
+              </NavLink>
+            )}
           </div>
 
           {/* Wallet */}
