@@ -35,6 +35,13 @@ export type Env = {
 	 */
 	CORS_ALLOWED_ORIGINS?: string;
 
+	/**
+	 * Public URL of the Next.js app (Cloudflare Pages), e.g. `https://shipdapp.pages.dev`.
+	 * When set, `GET /` on this Worker redirects there so the workers.dev / custom API host
+	 * is not mistaken for the product site.
+	 */
+	PUBLIC_FRONTEND_URL?: string;
+
 	/** Public key PEM (same bundle that produced the uploaded mTLS binding). Used to confirm cert is on-chain. */
 	AKASH_MTLS_CERT_PEM?: string;
 	AKASH_MTLS_PUBLIC_KEY_PEM?: string;

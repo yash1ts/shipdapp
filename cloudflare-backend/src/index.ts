@@ -86,6 +86,35 @@ app.use('*', (c, next) => {
 	})(c, next);
 });
 
+// Root: never use a static `public/index.html` here — that hid the real app behind a template.
+// Either redirect to the Next.js Pages URL or show a tiny API landing page.
+app.get('/', (c) => {
+	const raw = (c.env.PUBLIC_FRONTEND_URL ?? '').trim();
+	if (raw && /^https?:\/\//i.test(raw)) {
+		return c.redirect(raw, 302);
+	}
+	const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ShipDapp API</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:2rem;max-width:40rem;line-height:1.55;color:#e2e8f0;background:#0f172a}
+a{color:#38bdf8}code{background:#1e293b;padding:0.15rem 0.4rem;border-radius:4px}
+</style>
+</head>
+<body>
+<h1>ShipDapp API</h1>
+<p>This hostname is the <strong>Cloudflare Worker</strong> (REST API + cron + workflows). The marketing / app UI is the <strong>Next.js build on Cloudflare Pages</strong> — open that URL in the browser.</p>
+<p>To auto-redirect from here to your UI, set <code>PUBLIC_FRONTEND_URL</code> in <code>wrangler.jsonc</code> vars (e.g. your <code>*.pages.dev</code> URL) and redeploy this Worker.</p>
+<hr/>
+<p><a href="/api/deployments"><code>GET /api/deployments</code></a> — list recent deployments (public JSON).</p>
+</body>
+</html>`;
+	return c.html(html);
+});
+
 // ---------------- SIWS auth ----------------
 
 // Derive the domain used inside the signed message from the request's Host header. Signing with
