@@ -7,7 +7,7 @@
     "build:program": "anchor build",
     "test:program": "anchor test",
     "dev:frontend": "cd frontend && npm run dev",
-    "build:frontend": "cd frontend && npm run build",
+    "build:frontend": "cd frontend && npm install && npm run build",
     "install:all": "npm install && cd frontend && npm install && cd ../sdk && npm install"
   },
   "devDependencies": {
