@@ -15,8 +15,9 @@ import {
   Copy,
   RefreshCw,
 } from "lucide-react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { apiClient, apiEnvReady } from "@/lib/api-client";
+import { launchMemeTokenWithBondingCurve } from "@/lib/memeTokenLaunch";
 import { useAuth } from "@/components/AuthProvider";
 
 type FlowStep =
@@ -54,7 +55,8 @@ const DEFAULT_MEME_CONFIG = {
 } as const;
 
 export default function LaunchPage() {
-  const { publicKey } = useWallet();
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction } = useWallet();
   const { token, status: authStatus, signIn, error: authError } = useAuth();
   const [step, setStep] = useState<FlowStep>("details");
   const [form, setForm] = useState({
@@ -155,10 +157,34 @@ export default function LaunchPage() {
       setStep("error");
       return;
     }
+    if (!publicKey) {
+      setErrorMsg("Connect your wallet before launching.");
+      setStep("error");
+      return;
+    }
     setErrorMsg(null);
     setStatusHint(null);
     setStep("init_loading");
+
+    let tokenMintStr: string | undefined = undefined;
     try {
+      // 1. Launch the Meme Token
+      const launchResult = await launchMemeTokenWithBondingCurve({
+        connection,
+        walletPublicKey: publicKey,
+        sendTransaction,
+        name: memeConfig.tokenName.trim(),
+        symbol: memeConfig.symbol.trim(),
+      });
+      tokenMintStr = launchResult.mint.toBase58();
+    } catch (e) {
+      setErrorMsg(`Token launch failed: ${e instanceof Error ? e.message : String(e)}`);
+      setStep("error");
+      return;
+    }
+
+    try {
+      // 2. Initialize Deployment on Backend
       const port = Number(form.port) || 3000;
       const { data, error } = await apiClient.invoke(
         "deployments-init",
@@ -171,6 +197,7 @@ export default function LaunchPage() {
             port,
             tokenName: memeConfig.tokenName.trim() || undefined,
             tokenSymbol: memeConfig.symbol.trim() || undefined,
+            tokenMint: tokenMintStr,
           },
         }
       );
@@ -415,17 +442,17 @@ export default function LaunchPage() {
         <div className="container-card p-12 text-center">
           <Loader2 className="w-12 h-12 text-dock-400 animate-spin mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-white mb-2">
-            Creating funding wallet&hellip;
+            Launching Token & Creating Wallet&hellip;
           </h3>
           <p className="text-slate-400 text-sm">
-            Generating a Solana keypair for your app.
+            Please approve the token creation transactions in your wallet.
           </p>
           <p className="text-xs text-slate-500 mt-3">
-            Token launch will be merged into this same one-click flow using{" "}
+            Deploying{" "}
             <span className="text-slate-300">
               {memeConfig.symbol || "your token"}
             </span>{" "}
-            settings.
+            using Meteora Bonding Curve.
           </p>
         </div>
       )}
@@ -559,8 +586,7 @@ export default function LaunchPage() {
           <div className="container-card p-7 sm:p-8 text-center">
             <h4 className="text-lg font-semibold text-white mb-2">Next</h4>
             <p className="text-sm text-slate-400">
-              Deployment workflow and meme-token launch will run together in a
-              single one-click action in the next update.
+              Your token has been successfully launched on the blockchain.
             </p>
             <p className="text-xs text-slate-500 mt-3">
               Selected token:{" "}

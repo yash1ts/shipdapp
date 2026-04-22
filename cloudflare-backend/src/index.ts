@@ -189,7 +189,7 @@ app.get('/api/auth/me', requireAuth, async (c) => {
 app.post('/api/deployments-init', requireAuth, async (c) => {
 	const db = drizzle(c.env.DB);
 	const body = await c.req.json();
-	const { appName, dockerImage, description, port, tokenName, tokenSymbol } = body;
+	const { appName, dockerImage, description, port, tokenName, tokenSymbol, tokenMint } = body;
 	// Always take the owner wallet from the verified session, never from the body. The body's
 	// `ownerWallet`, if any, is ignored.
 	const owner = c.var.wallet;
@@ -220,6 +220,7 @@ app.post('/api/deployments-init', requireAuth, async (c) => {
 			ownerWallet: owner,
 			tokenName: typeof tokenName === 'string' && tokenName.trim() ? tokenName.trim() : null,
 			tokenSymbol: typeof tokenSymbol === 'string' && tokenSymbol.trim() ? tokenSymbol.trim().toUpperCase() : null,
+			tokenMint: typeof tokenMint === 'string' && tokenMint.trim() ? tokenMint.trim() : null,
 		})
 		.returning({ id: appDeployments.id });
 
